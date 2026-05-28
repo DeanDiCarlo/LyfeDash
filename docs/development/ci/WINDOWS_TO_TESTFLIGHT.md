@@ -21,6 +21,8 @@ You can write the app from Windows/WSL, but an iOS app still needs a macOS build
 
 Add these repository secrets before running the manual `TestFlight` workflow:
 
+- `SUPABASE_URL`: your Supabase project URL.
+- `SUPABASE_ANON_KEY`: your Supabase anon or publishable client key.
 - `APPLE_TEAM_ID`: Apple Developer team ID.
 - `BUILD_CERTIFICATE_BASE64`: base64-encoded `.p12` Apple Distribution certificate.
 - `P12_PASSWORD`: password for the `.p12` certificate.

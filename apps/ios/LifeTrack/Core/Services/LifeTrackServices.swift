@@ -5,6 +5,7 @@ struct LifeTrackServices {
     var screenTime: ScreenTimeProviding
     var photos: PhotoImporting
     var location: LocationProviding
+    var supabase: SupabaseConnectionProviding
     var recall: RecallSearching
     var sync: SyncCoordinating
 
@@ -13,6 +14,7 @@ struct LifeTrackServices {
         screenTime: StubScreenTimeProvider(),
         photos: StubPhotoImporter(),
         location: StubLocationProvider(),
+        supabase: SupabaseConnectionService(),
         recall: StubRecallSearchService(),
         sync: StubSyncCoordinator()
     )

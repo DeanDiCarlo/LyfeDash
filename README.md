@@ -24,9 +24,29 @@ This workspace does not include an Xcode toolchain, so the iOS app cannot be bui
    - App Groups if needed for DeviceActivity extensions later
    - Background Modes: location updates
    - Photo Library usage descriptions in `Info.plist`
-5. Add Supabase Swift when Phase 4 begins.
+5. Add Supabase credentials for cloud sync.
 
 If using XcodeGen, follow [docs/development/XCODE_SETUP.md](docs/development/XCODE_SETUP.md).
+
+## Supabase Configuration
+
+For local or TestFlight builds, provide:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+Local setup:
+
+```sh
+cp apps/ios/LifeTrack/Resources/SupabaseSecrets.plist.example apps/ios/LifeTrack/Resources/SupabaseSecrets.plist
+```
+
+Then replace the example values. `SupabaseSecrets.plist` is ignored by Git.
+
+GitHub Actions setup:
+
+- Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` as repository secrets.
+- CI can build without them, but TestFlight requires them.
 
 ## Architecture Defaults
 

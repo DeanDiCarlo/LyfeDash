@@ -16,6 +16,7 @@ DerivedData/
 .env
 .env.*
 !.env.example
+apps/ios/LifeTrack/Resources/SupabaseSecrets.plist
 
 # OS/editor
 .DS_Store
