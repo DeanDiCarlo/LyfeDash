@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>Life Track</string>
+  <key>CFBundleShortVersionString</key>
+  <string>0.1</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSRequiresIPhoneOS</key>
+  <true/>
+  <key>NSHealthShareUsageDescription</key>
+  <string>Life Track reads steps and sleep to build daily personal summaries.</string>
+  <key>NSHealthUpdateUsageDescription</key>
+  <string>Life Track does not write health data.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Life Track uses location to attach places to journal entries and memories.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Life Track can remember significant places in the background so your daily memory map is complete.</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Life Track imports selected photos and videos to build a searchable memory board.</string>
+  <key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Life Track may save generated memory thumbnails if you choose to export them.</string>
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>location</string>
+  </array>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+</dict>
+</plist>
+

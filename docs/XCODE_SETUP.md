@@ -1,0 +1,34 @@
+# Xcode Setup
+
+## Preferred setup
+
+Use XcodeGen from the repository root:
+
+```sh
+xcodegen generate
+open LifeTrack.xcodeproj
+```
+
+If XcodeGen is not installed:
+
+```sh
+brew install xcodegen
+```
+
+## Capabilities
+
+After opening the project in Xcode, confirm these capabilities on the `LifeTrack` app target:
+
+- HealthKit
+- Family Controls
+- Background Modes: Location updates
+
+Screen Time APIs may require Apple Developer Program entitlement approval before they work in TestFlight or App Store distribution.
+
+## Required packages
+
+The scaffold is dependency-free for Phase 0 and Phase 1. Add packages only when a phase needs them:
+
+- Phase 4: Supabase Swift client.
+- Phase 6: any backend-only AI SDKs should stay out of the iOS target unless there is a clear on-device use case.
+
