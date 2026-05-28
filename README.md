@@ -15,15 +15,16 @@ This repository currently contains the implementation scaffold:
 
 This workspace does not include an Xcode toolchain, so the iOS app cannot be built here. On macOS:
 
-1. Create a new iOS SwiftUI app target in Xcode named `LifeTrack`.
-2. Add the files under `apps/ios/LifeTrack` to the app target.
-3. Enable capabilities as phases require them:
+1. Install Xcode from the Mac App Store or Apple Developer Downloads.
+2. Run `make setup`.
+3. Open `LifeTrack.xcodeproj`.
+4. Enable capabilities as phases require them:
    - HealthKit
    - Family Controls
    - App Groups if needed for DeviceActivity extensions later
    - Background Modes: location updates
    - Photo Library usage descriptions in `Info.plist`
-4. Add Supabase Swift when Phase 4 begins.
+5. Add Supabase Swift when Phase 4 begins.
 
 If using XcodeGen, follow [docs/development/XCODE_SETUP.md](docs/development/XCODE_SETUP.md).
 

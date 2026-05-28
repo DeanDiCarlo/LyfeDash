@@ -2,6 +2,16 @@
 
 ## Preferred setup
 
+From macOS:
+
+```sh
+make setup
+```
+
+This verifies Xcode, selects `/Applications/Xcode.app`, installs XcodeGen through Homebrew when needed, and generates the project.
+
+## Manual setup
+
 Use XcodeGen from the repository root:
 
 ```sh
@@ -14,6 +24,15 @@ If XcodeGen is not installed:
 ```sh
 brew install xcodegen
 ```
+
+## Build and test
+
+```sh
+make build
+make test
+```
+
+The default destination is `platform=iOS Simulator,name=iPhone 16`. Change `DESTINATION` in the root `Makefile` if your installed simulator name differs.
 
 ## Capabilities
 
