@@ -1,6 +1,8 @@
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.lifeTrackServices) private var services
     @State private var statusMessage = "Permissions are requested only when you enable a source."
     @State private var supabaseState: SupabaseConfigurationState = .missing
@@ -35,7 +37,7 @@ struct SettingsView: View {
 
                 Section("Sync") {
                     Button("Sync pending changes") {
-                        Task { await run("Sync") { try await services.sync.syncPendingChanges() } }
+                        Task { await run("Sync") { try await services.sync.syncPendingChanges(modelContext: modelContext) } }
                     }
                 }
 

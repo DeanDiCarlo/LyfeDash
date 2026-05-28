@@ -18,7 +18,7 @@ struct LifeTrackServices {
         supabase: SupabaseConnectionService(),
         auth: makeAuthProvider(),
         recall: StubRecallSearchService(),
-        sync: StubSyncCoordinator()
+        sync: makeSyncCoordinator()
     )
 
     private static func makeHealthProvider() -> HealthMetricsProviding {
@@ -34,6 +34,14 @@ struct LifeTrackServices {
         SupabaseAuthService()
         #else
         StubAuthService()
+        #endif
+    }
+
+    private static func makeSyncCoordinator() -> SyncCoordinating {
+        #if canImport(Supabase)
+        SupabaseJournalSyncCoordinator()
+        #else
+        StubSyncCoordinator()
         #endif
     }
 }

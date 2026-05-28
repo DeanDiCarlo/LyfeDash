@@ -1,10 +1,12 @@
 import Foundation
+import SwiftData
 
 protocol SyncCoordinating {
-    func syncPendingChanges() async throws
+    @MainActor
+    func syncPendingChanges(modelContext: ModelContext) async throws
 }
 
 struct StubSyncCoordinator: SyncCoordinating {
-    func syncPendingChanges() async throws {}
+    @MainActor
+    func syncPendingChanges(modelContext: ModelContext) async throws {}
 }
-

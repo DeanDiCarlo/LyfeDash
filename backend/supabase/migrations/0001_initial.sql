@@ -31,6 +31,7 @@ create table public.metric_daily_aggregates (
 create table public.journal_entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  client_id uuid not null,
   day_id uuid not null references public.days(id) on delete cascade,
   body text not null,
   latitude double precision,
@@ -38,6 +39,9 @@ create table public.journal_entries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create unique index journal_entries_user_client_id_idx
+  on public.journal_entries (user_id, client_id);
 
 create table public.task_templates (
   id uuid primary key default gen_random_uuid(),
