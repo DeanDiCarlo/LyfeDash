@@ -12,11 +12,11 @@ targets:
     type: application
     platform: iOS
     sources:
-      - ios/LifeTrack
+      - apps/ios/LifeTrack
     info:
-      path: ios/LifeTrack/Info.plist
+      path: apps/ios/LifeTrack/Resources/Info.plist
     entitlements:
-      path: ios/LifeTrack/LifeTrack.entitlements
+      path: apps/ios/LifeTrack/Resources/LifeTrack.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.deanomeano.lifetrack
@@ -26,7 +26,7 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - ios/LifeTrackTests
+      - apps/ios/LifeTrackTests
     dependencies:
       - target: LifeTrack
     settings:

@@ -32,3 +32,11 @@ The scaffold is dependency-free for Phase 0 and Phase 1. Add packages only when 
 - Phase 4: Supabase Swift client.
 - Phase 6: any backend-only AI SDKs should stay out of the iOS target unless there is a clear on-device use case.
 
+## Source layout
+
+The Xcode target reads from `apps/ios/LifeTrack`.
+
+- `App`: app entrypoint and root navigation.
+- `Core`: shared models, domain helpers, design system, and service protocols/adapters.
+- `Features`: screen modules grouped by product area.
+- `Resources`: app plist, entitlements, and future assets.
