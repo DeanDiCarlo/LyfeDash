@@ -38,12 +38,12 @@ final class HealthKitMetricsProvider: HealthMetricsProviding {
             throw HealthKitMetricsError.missingSleepType
         }
 
-        try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             healthStore.requestAuthorization(toShare: [], read: [steps, sleep]) { _, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else {
-                    continuation.resume()
+                    continuation.resume(returning: ())
                 }
             }
         }
@@ -80,7 +80,7 @@ final class HealthKitMetricsProvider: HealthMetricsProviding {
             throw HealthKitMetricsError.missingStepType
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Int?, Error>) in
             let predicate = HKQuery.predicateForSamples(withStart: interval.start, end: interval.end, options: [.strictStartDate])
             let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, statistics, error in
                 if let error {
@@ -101,7 +101,7 @@ final class HealthKitMetricsProvider: HealthMetricsProviding {
             throw HealthKitMetricsError.missingSleepType
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Int?, Error>) in
             let predicate = HKQuery.predicateForSamples(withStart: interval.start, end: interval.end, options: [])
             let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
                 if let error {
