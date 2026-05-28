@@ -6,6 +6,7 @@ struct LifeTrackServices {
     var photos: PhotoImporting
     var location: LocationProviding
     var supabase: SupabaseConnectionProviding
+    var auth: AuthProviding
     var recall: RecallSearching
     var sync: SyncCoordinating
 
@@ -15,6 +16,7 @@ struct LifeTrackServices {
         photos: StubPhotoImporter(),
         location: StubLocationProvider(),
         supabase: SupabaseConnectionService(),
+        auth: makeAuthProvider(),
         recall: StubRecallSearchService(),
         sync: StubSyncCoordinator()
     )
@@ -24,6 +26,14 @@ struct LifeTrackServices {
         HealthKitMetricsProvider()
         #else
         StubHealthMetricsProvider()
+        #endif
+    }
+
+    private static func makeAuthProvider() -> AuthProviding {
+        #if canImport(Supabase)
+        SupabaseAuthService()
+        #else
+        StubAuthService()
         #endif
     }
 }
