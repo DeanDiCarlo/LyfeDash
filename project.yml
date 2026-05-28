@@ -32,3 +32,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.deanomeano.lifetrack.tests
+schemes:
+  LifeTrack:
+    build:
+      targets:
+        LifeTrack: all
+    test:
+      targets:
+        - LifeTrackTests
