@@ -36,6 +36,7 @@ create table public.journal_entries (
   body text not null,
   latitude double precision,
   longitude double precision,
+  deleted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

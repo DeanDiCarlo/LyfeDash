@@ -28,14 +28,28 @@ struct SupabaseJournalSyncCoordinator: SyncCoordinating {
     }
 
     @MainActor
-    func syncPendingChanges(modelContext: ModelContext) async throws {
+    func syncJournal(modelContext: ModelContext) async throws -> SyncSummary {
         guard let client else {
             throw SupabaseSyncError.missingConfiguration
         }
 
         let session = try await client.auth.session
         let userID = session.user.id.uuidString
+        var summary = SyncSummary()
 
+        try await uploadLocalChanges(modelContext: modelContext, userID: userID, client: client, summary: &summary)
+        try await pullRemoteEntries(modelContext: modelContext, userID: userID, client: client, summary: &summary)
+
+        return summary
+    }
+
+    @MainActor
+    private func uploadLocalChanges(
+        modelContext: ModelContext,
+        userID: String,
+        client: SupabaseClient,
+        summary: inout SyncSummary
+    ) async throws {
         let descriptor = FetchDescriptor<JournalEntry>(sortBy: [SortDescriptor(\.createdAt)])
         let entries = try modelContext.fetch(descriptor)
         let pendingEntries = entries.filter { $0.syncState != .synced }
@@ -59,7 +73,15 @@ struct SupabaseJournalSyncCoordinator: SyncCoordinating {
                     remoteDayIDs[entry.dayKey] = dayID
                 }
 
-                let remoteID = try await upsert(entry: entry, dayID: dayID, userID: userID, client: client)
+                let remoteID: UUID
+                if entry.deletedAt == nil {
+                    remoteID = try await upsert(entry: entry, dayID: dayID, userID: userID, client: client)
+                    summary.uploaded += 1
+                } else {
+                    remoteID = try await delete(entry: entry, dayID: dayID, userID: userID, client: client)
+                    summary.deleted += 1
+                }
+
                 entry.remoteID = remoteID
                 entry.syncState = .synced
                 try modelContext.save()
@@ -69,6 +91,73 @@ struct SupabaseJournalSyncCoordinator: SyncCoordinating {
                 throw error
             }
         }
+    }
+
+    @MainActor
+    private func pullRemoteEntries(
+        modelContext: ModelContext,
+        userID: String,
+        client: SupabaseClient,
+        summary: inout SyncSummary
+    ) async throws {
+        let remoteEntries: [RemoteJournalEntry] = try await client
+            .from("journal_entries")
+            .select("id,client_id,body,latitude,longitude,created_at,updated_at,deleted_at,days(date_key)")
+            .eq("user_id", value: userID)
+            .order("updated_at", ascending: false)
+            .execute()
+            .value
+
+        let descriptor = FetchDescriptor<JournalEntry>()
+        let localEntries = try modelContext.fetch(descriptor)
+        let localByClientID = Dictionary(uniqueKeysWithValues: localEntries.map { ($0.id, $0) })
+        let localByRemoteID = Dictionary(uniqueKeysWithValues: localEntries.compactMap { entry in
+            entry.remoteID.map { ($0, entry) }
+        })
+
+        for remote in remoteEntries {
+            guard let dayKey = remote.days?.dateKey,
+                  let createdAt = SyncDateFormatter.dateTime(from: remote.createdAt),
+                  let updatedAt = SyncDateFormatter.dateTime(from: remote.updatedAt) else {
+                continue
+            }
+
+            let deletedAt = remote.deletedAt.flatMap(SyncDateFormatter.dateTime(from:))
+            let local = localByClientID[remote.clientID] ?? localByRemoteID[remote.id]
+
+            if let local {
+                guard local.syncState == .synced || local.syncState == .localOnly else {
+                    continue
+                }
+
+                guard remote.updatedAtDateIsNewer(than: local.updatedAt) else {
+                    continue
+                }
+
+                local.remoteID = remote.id
+                local.dayKey = dayKey
+                local.body = remote.body
+                local.latitude = remote.latitude
+                local.longitude = remote.longitude
+                local.createdAt = createdAt
+                local.updatedAt = updatedAt
+                local.deletedAt = deletedAt
+                local.syncState = .synced
+                summary.downloaded += 1
+            } else {
+                let entry = JournalEntry(dayKey: dayKey, body: remote.body, createdAt: createdAt)
+                entry.remoteID = remote.id
+                entry.updatedAt = updatedAt
+                entry.deletedAt = deletedAt
+                entry.latitude = remote.latitude
+                entry.longitude = remote.longitude
+                entry.syncState = .synced
+                modelContext.insert(entry)
+                summary.downloaded += 1
+            }
+        }
+
+        try modelContext.save()
     }
 
     private func upsertDay(dayKey: String, userID: String, client: SupabaseClient) async throws -> UUID {
@@ -96,6 +185,20 @@ struct SupabaseJournalSyncCoordinator: SyncCoordinating {
     }
 
     private func upsert(entry: JournalEntry, dayID: UUID, userID: String, client: SupabaseClient) async throws -> UUID {
+        let payload = JournalEntryPayload(entry: entry, dayID: dayID, userID: userID)
+
+        let remoteEntry: RemoteIdentifier = try await client
+            .from("journal_entries")
+            .upsert(payload, onConflict: "user_id,client_id")
+            .select("id")
+            .single()
+            .execute()
+            .value
+
+        return remoteEntry.id
+    }
+
+    private func delete(entry: JournalEntry, dayID: UUID, userID: String, client: SupabaseClient) async throws -> UUID {
         let payload = JournalEntryPayload(entry: entry, dayID: dayID, userID: userID)
 
         let remoteEntry: RemoteIdentifier = try await client
@@ -137,6 +240,7 @@ private struct JournalEntryPayload: Encodable {
     let body: String
     let latitude: Double?
     let longitude: Double?
+    let deletedAt: String?
     let createdAt: String
     let updatedAt: String
 
@@ -147,6 +251,7 @@ private struct JournalEntryPayload: Encodable {
         self.body = entry.body
         self.latitude = entry.latitude
         self.longitude = entry.longitude
+        self.deletedAt = entry.deletedAt.map { SyncDateFormatter.timestamp($0) }
         self.createdAt = SyncDateFormatter.timestamp(entry.createdAt)
         self.updatedAt = SyncDateFormatter.timestamp(entry.updatedAt)
     }
@@ -158,8 +263,49 @@ private struct JournalEntryPayload: Encodable {
         case body
         case latitude
         case longitude
+        case deletedAt = "deleted_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+}
+
+private struct RemoteJournalEntry: Decodable {
+    let id: UUID
+    let clientID: UUID
+    let body: String
+    let latitude: Double?
+    let longitude: Double?
+    let createdAt: String
+    let updatedAt: String
+    let deletedAt: String?
+    let days: RemoteDay?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case clientID = "client_id"
+        case body
+        case latitude
+        case longitude
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case deletedAt = "deleted_at"
+        case days
+    }
+
+    func updatedAtDateIsNewer(than localUpdatedAt: Date) -> Bool {
+        guard let remoteUpdatedAt = SyncDateFormatter.dateTime(from: updatedAt) else {
+            return false
+        }
+
+        return remoteUpdatedAt > localUpdatedAt
+    }
+}
+
+private struct RemoteDay: Decodable {
+    let dateKey: String
+
+    enum CodingKeys: String, CodingKey {
+        case dateKey = "date_key"
     }
 }
 
@@ -170,6 +316,10 @@ private enum SyncDateFormatter {
 
     static func timestamp(_ date: Date) -> String {
         timestampFormatter.string(from: date)
+    }
+
+    static func dateTime(from value: String) -> Date? {
+        timestampFormatter.date(from: value) ?? fallbackTimestampFormatter.date(from: value)
     }
 
     private static let dayFormatter: DateFormatter = {
@@ -184,6 +334,12 @@ private enum SyncDateFormatter {
     private static let timestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let fallbackTimestampFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
         return formatter
     }()
 }

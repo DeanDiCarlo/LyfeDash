@@ -17,7 +17,7 @@ struct TodayView: View {
     }
 
     private var todaysEntries: [JournalEntry] {
-        entries.filter { $0.dayKey == todayKey }
+        entries.filter { $0.dayKey == todayKey && $0.deletedAt == nil }
     }
 
     private var todaysTasks: [TaskInstance] {
@@ -151,9 +151,14 @@ struct TodayView: View {
                         .foregroundStyle(Brand.ColorToken.moss)
                 } else {
                     ForEach(todaysEntries) { entry in
-                        Text(entry.body)
-                            .foregroundStyle(Brand.ColorToken.forestInk)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: Brand.Spacing.xs) {
+                            Text(entry.body)
+                                .foregroundStyle(Brand.ColorToken.forestInk)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(entry.syncState.rawValue.capitalized)
+                                .font(.caption2)
+                                .foregroundStyle(Brand.ColorToken.moss)
+                        }
                     }
                 }
             }

@@ -8,6 +8,7 @@ final class JournalEntry {
     var body: String
     var createdAt: Date
     var updatedAt: Date
+    var deletedAt: Date?
     var latitude: Double?
     var longitude: Double?
     var remoteID: UUID?
@@ -21,5 +22,16 @@ final class JournalEntry {
         self.updatedAt = createdAt
         self.syncState = .pending
     }
-}
 
+    func updateBody(_ newBody: String, updatedAt: Date = Date()) {
+        self.body = newBody
+        self.updatedAt = updatedAt
+        self.syncState = .pending
+    }
+
+    func markDeleted(at deletedAt: Date = Date()) {
+        self.deletedAt = deletedAt
+        self.updatedAt = deletedAt
+        self.syncState = .pending
+    }
+}

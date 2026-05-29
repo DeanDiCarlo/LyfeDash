@@ -37,7 +37,7 @@ struct SettingsView: View {
 
                 Section("Sync") {
                     Button("Sync pending changes") {
-                        Task { await run("Sync") { try await services.sync.syncPendingChanges(modelContext: modelContext) } }
+                        Task { await syncJournal() }
                     }
                 }
 
@@ -180,6 +180,15 @@ struct SettingsView: View {
             statusMessage = "Signed out."
         } catch {
             statusMessage = "Sign out failed: \(error.localizedDescription)"
+        }
+    }
+
+    private func syncJournal() async {
+        do {
+            let summary = try await services.sync.syncJournal(modelContext: modelContext)
+            statusMessage = "Sync complete: \(summary.uploaded) uploaded, \(summary.downloaded) downloaded, \(summary.deleted) deleted."
+        } catch {
+            statusMessage = "Sync failed: \(error.localizedDescription)"
         }
     }
 }
